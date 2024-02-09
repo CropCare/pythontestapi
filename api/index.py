@@ -7,6 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_httpauth import HTTPBasicAuth
 from sqlalchemy import inspect
 import bcrypt
+from flask_cors import CORS
 
 
 # initialization
@@ -14,6 +15,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'the quick brown fox jumps over the lazy dog'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://sql8682485:HAGEakjp9M@sql8.freemysqlhosting.net:3306/sql8682485'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+CORS(app)
 
 # extensions
 db = SQLAlchemy(app)
@@ -37,7 +39,7 @@ class User(db.Model):
 
 @app.route('/')
 def welcome():
-    return "hellow world"
+    return "hello world"
 
 @app.route('/api/login', methods=['POST'])
 def login():
