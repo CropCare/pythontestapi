@@ -7,7 +7,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_httpauth import HTTPBasicAuth
 from sqlalchemy import inspect
 import bcrypt
-
+import re
+from datetime import datetime
 
 # initialization
 app = Flask(__name__)
@@ -32,8 +33,11 @@ def check_password(plain_password, hashed_password):
 class User(db.Model):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(80), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    first_name = db.Column(db.String(50), nullable=False)
+    last_name = db.Column(db.String(50), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
 @app.route('/')
 def welcome():
@@ -42,10 +46,11 @@ def welcome():
 @app.route('/api/login', methods=['POST'])
 def login():
     if request.method == 'POST':
-        username = request.json.get('username')
+        email = request.json.get('email')  # This can be either email or username
         password = request.json.get('password')
 
-        user = User.query.filter_by(username=username).first()
+        # Query the database for a user with either the given email or username
+        user = User.query.filter((User.email == email)).first()
         if user:
             if check_password(password, user.password):
                 return jsonify({'success': True}), 200
@@ -54,29 +59,50 @@ def login():
         else:
             return jsonify({'success': False, 'error': 'Invalid credentials'}), 401
 
+
 @app.route('/api/adduser', methods=['POST'])
 def new_user():
-    username = request.json.get('username')
     password = request.json.get('password')
+    email = request.json.get('email')
+    first_name = request.json.get('first_name')
+    last_name = request.json.get('last_name')
 
-    if username is None or password is None:
-        abort(400)  # Missing arguments
+    errors = []
 
-    if User.query.filter_by(username=username).first() is not None:
-        abort(400)  # Existing user
+    if password is None:
+        errors.append("Password is missing")
+    elif len(password) < 8:
+        errors.append("Password should have at least 8 characters")
+    elif not re.search("[A-Z]", password):
+        errors.append("Password should contain at least one capital letter")
+    if email is None:
+        errors.append("Email is missing")
+    if first_name is None:
+        errors.append("First name is missing")
+    if last_name is None:
+        errors.append("Last name is missing")
+
+    if errors:
+        return jsonify({'success': False, 'errors': errors}), 400
+
+    if User.query.filter_by(email=email).first() is not None:
+        errors.append("email already exists")
+
+    if errors:
+        return jsonify({'success': False, 'errors': errors}), 400
 
     # Hash the password before storing it
     hashed_password = hash_password(password)
 
     # Create a new User object with the hashed password
-    new_user = User(username=username, password=hashed_password)
+    new_user = User(password=hashed_password, email=email, first_name=first_name, last_name=last_name)
 
     # Add the new user to the session and commit changes to the database
     db.session.add(new_user)
     db.session.commit()
 
     # Return a response indicating success
-    return (jsonify({'username': new_user.username}), 201,
+    return (jsonify({'username': new_user.username, 'email': new_user.email, 'first_name': new_user.first_name, 'last_name': new_user.last_name}), 201,
             {'Location': url_for('get_user', id=new_user.id, _external=True)})
 
 @app.route('/api/users/<int:id>')
