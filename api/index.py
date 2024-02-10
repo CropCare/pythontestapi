@@ -33,7 +33,7 @@ def check_password(plain_password, hashed_password):
 
 
 class User(db.Model):
-    __tablename__ = 'user'
+    __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     password = db.Column(db.String(80), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -48,7 +48,7 @@ def welcome():
 @app.route('/api/login', methods=['POST'])
 def login():
     if request.method == 'POST':
-        email = request.json.get('email')  # This can be either email or username
+        email = request.json.get('email') 
         password = request.json.get('password')
 
         # Query the database for a user with either the given email or username
@@ -91,6 +91,7 @@ def new_user():
         errors.append("email already exists")
 
     if errors:
+        print(errors)
         return jsonify({'success': False, 'errors': errors}), 400
 
     # Hash the password before storing it
@@ -104,8 +105,7 @@ def new_user():
     db.session.commit()
 
     # Return a response indicating success
-    return (jsonify({'username': new_user.username, 'email': new_user.email, 'first_name': new_user.first_name, 'last_name': new_user.last_name}), 201,
-            {'Location': url_for('get_user', id=new_user.id, _external=True)})
+    return (jsonify({'success':True}), 201)
 
 @app.route('/api/users/<int:id>')
 def get_user(id):
