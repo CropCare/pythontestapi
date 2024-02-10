@@ -9,9 +9,11 @@ from sqlalchemy import inspect
 import bcrypt
 import re
 from datetime import datetime
+from flask_cors import CORS
 
 # initialization
 app = Flask(__name__)
+CORS(app)
 app.config['SECRET_KEY'] = 'the quick brown fox jumps over the lazy dog'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://sql8682485:HAGEakjp9M@sql8.freemysqlhosting.net:3306/sql8682485'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
