@@ -6,6 +6,7 @@ from flask import Flask, abort, request, jsonify, g, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_httpauth import HTTPBasicAuth
 from sqlalchemy import inspect
+from waitress import serve
 import bcrypt
 import re
 from datetime import datetime
@@ -128,4 +129,4 @@ if __name__ == '__main__':
         if not inspector.has_table('user'):
             # Create all tables if the User table doesn't exist
             db.create_all()
-    app.run(debug=True)
+    serve(app, host='0.0.0.0', port=5000)
