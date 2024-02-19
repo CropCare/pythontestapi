@@ -16,7 +16,7 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 app.config['SECRET_KEY'] = 'the quick brown fox jumps over the lazy dog'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://sql8682485:HAGEakjp9M@sql8.freemysqlhosting.net:3306/sql8682485'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:''@localhost:3306/backend'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # extensions
@@ -32,6 +32,25 @@ def check_password(plain_password, hashed_password):
     # Check if the plain text password matches the hashed password
     return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
+placeholder_data = {
+    "water": {
+        "rainfall": 0.5,  # Placeholder value for rainfall sensor (in inches)
+        "humidity": 45,   # Placeholder value for humidity sensor (in percentage)
+        "soil_moisture": 60,  # Placeholder value for soil moisture sensor (in percentage)
+        "pump_status": 0,  # Placeholder value for pump status
+        "temperature": 25  # Placeholder value for temperature sensor (in Celsius)
+    },
+    "fert": {
+        "soil_moisture": 55,  # Placeholder value for soil moisture sensor (in percentage)
+        "ph": 6.5,  # Placeholder value for pH sensor
+        "humidity": 50  # Placeholder value for humidity sensor (in percentage)
+    },
+    "electricity": {
+        "temperature": 27,  # Placeholder value for temperature sensor (in Celsius)
+        "light": 400,  # Placeholder value for light sensor (in lux)
+        "conductivity": 300  # Placeholder value for conductivity sensor (in microsiemens per centimeter)
+    }
+}
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -41,10 +60,25 @@ class User(db.Model):
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+class Sensor(db.Model):
+    __tablename__ = 'sensors'
 
+    id = db.Column(db.Integer, primary_key=True)
+    category = db.Column(db.String(50), nullable=False)
+    sensor_name = db.Column(db.String(50), nullable=False)
+    data = db.Column(db.Float, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    def __init__(self, category, sensor_name, data):
+        self.category = category
+        self.sensor_name = sensor_name
+        self.data = data
+
+    def __repr__(self):
+        return f"<Sensor(category='{self.category}', sensor_name='{self.sensor_name}', data={self.data}, timestamp={self.timestamp})>"
 @app.route('/')
 def welcome():
-    return "hellow world"
+    return "Hello world!"
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -62,7 +96,23 @@ def login():
         else:
             return jsonify({'success': False, 'error': 'Invalid credentials'}), 401
 
+@app.route("/api/<category>")
+def get_sensor_data(category):
+    if category not in placeholder_data:
+        return jsonify({"error": "Category not found"}), 404
 
+    return jsonify(placeholder_data[category])
+
+# POST route for controlling sensor data
+@app.route("/apt/control/<sensor_name>/<sensor_data>", methods=["POST"])
+def control_sensor_data(sensor_name, sensor_data):
+    # Check if the sensor name exists in the placeholder data
+    if sensor_name in placeholder_data:
+        # Update the sensor data with the provided value
+        placeholder_data[sensor_name] = float(sensor_data)
+        return jsonify({"message": f"Sensor {sensor_name} data updated successfully."}), 200
+    else:
+        return jsonify({"error": f"Sensor {sensor_name} not found."}), 404
 @app.route('/api/adduser', methods=['POST'])
 def new_user():
     password = request.json.get('password')
