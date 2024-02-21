@@ -1,5 +1,3 @@
-Certainly! Flask can be integrated with SQLAlchemy to connect with MySQL databases. SQLAlchemy is a powerful SQL toolkit and Object-Relational Mapping (ORM) library for Python.
-
 Here's a step-by-step guide on how to integrate Flask with SQLAlchemy to connect to a MySQL database:
 
 1. **Install Required Packages:**
